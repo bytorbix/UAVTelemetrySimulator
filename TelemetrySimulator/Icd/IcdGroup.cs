@@ -1,4 +1,4 @@
-﻿namespace TelemetrySimulator
+﻿namespace TelemetrySimulator.Icd
 {
     public class IcdGroup
     {

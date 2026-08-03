@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace TelemetrySimulator
+namespace TelemetrySimulator.Icd
 {
     public class IcdDocument
     {
@@ -59,6 +59,9 @@ namespace TelemetrySimulator
                 }
             }
         }
+
+        public bool TryGetField(string identifier, out IcdField? field) 
+            => _fieldLookup.TryGetValue(identifier, out field);
 
         public IcdField GetField(string identifier) => _fieldLookup[identifier];
 
