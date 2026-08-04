@@ -4,66 +4,42 @@ namespace TelemetrySimulator.Icd
 {
     public class IcdDocument
     {
-        public List<IcdGroup> Groups { get; init; }
+        public List<IcdParam> Params { get; init; }
 
-        private Dictionary<string, IcdField> _fieldLookup; // build up dict for O(1) future lookups
+        private Dictionary<string, IcdParam> _fieldLookup; // build up dict for O(1) future lookups
 
         public static IcdDocument Load(string json)
         {
-            IcdDocument? document = JsonSerializer.Deserialize<IcdDocument>(json);
+            List<IcdParam>? ExtractedParams = JsonSerializer.Deserialize<List<IcdParam>>(json);
 
-            if (document is null)
+            if (ExtractedParams is null)
             {
                 throw new InvalidOperationException("Failed to deserialize ICD document");
             }
 
-            if (document.Groups is null)
-            {
-                throw new InvalidOperationException("ICD document has no 'Groups'.");
-            }
+            IcdDocument document = new IcdDocument { Params = ExtractedParams };
 
-            document.Validate();
             document.BuildLookup();
-
             return document;
-
-        }
-
-        private void Validate()
-        {
-            foreach (IcdGroup group in Groups)
-            {
-                foreach (IcdField field in group.Fields)
-                {   // Checking if 
-                    if (field.Type == IcdDataType.Float && field.Size != 32)
-                    {
-                        throw new InvalidOperationException(
-                            $"Field '{field.Identifier}' is Float but declares Size={field.Size}. Float fields must be 32 bits.");
-                    }
-                }
-            }
         }
 
         private void BuildLookup()
         {
-            _fieldLookup = new Dictionary<string, IcdField>();
-            foreach (IcdGroup group in Groups)
+            _fieldLookup = new Dictionary<string, IcdParam>();
+            foreach (IcdParam param in Params)
             {
-                foreach(IcdField field in group.Fields)
+                if (!_fieldLookup.TryAdd(param.Identifier, param))
                 {
-                    if (!_fieldLookup.TryAdd(field.Identifier, field))
-                    {
-                        throw new InvalidOperationException(
-                            $"Duplicate ICD field identifier: '{field.Identifier}'.");
-                    }
+                    throw new InvalidOperationException(
+                        $"Duplicate ICD field identifier: '{param.Identifier}'.");
                 }
             }
         }
 
-        public bool TryGetField(string identifier, out IcdField? field) 
-            => _fieldLookup.TryGetValue(identifier, out field);
+        public bool TryGetField(string identifier, out IcdParam? param)
+            => _fieldLookup.TryGetValue(identifier, out param);
 
-        public IcdField GetField(string identifier) => _fieldLookup[identifier];
+        public IcdParam GetField(string identifier) => _fieldLookup[identifier];
 
     }
 }
