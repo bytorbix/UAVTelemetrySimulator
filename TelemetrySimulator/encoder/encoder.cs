@@ -1,16 +1,15 @@
+using System.Dynamic;
 using TelemetrySimulator.Icd;
 
 public class Encoder
 {
+
+    const int BITS_PER_BYTE = 8;
+    const string CORRELATOR_PARAM_NAME = "correlator";
+
     public byte[] BuildFrame(IcdDocument icd, Dictionary<string, double> resolvedValues, int correlatorValue)
     {
-
-        int framesize = icd.Params.Sum(param => (param.Size + 7) / 8);
-        byte[] payload = new byte[framesize];
-
-        // build through flags + correlator param
-
-
+        byte[] frame = new byte[CalculateFrameSize(icd)];
 
         int bitOffset = 0;
 
@@ -20,37 +19,54 @@ public class Encoder
             int fieldBitOffset = bitOffset;
             bitOffset += param.Size;
 
-            bool included = param.CorrValue == 0 || (correlatorValue & param.CorrValue) != 0;
+            if (!IsIncluded(param, correlatorValue)) continue;
 
-            if (!included) continue;
+            if (!TryResolveValue(param, resolvedValues, correlatorValue, out double value)) continue;
 
-            double value;
-            if (param.Identifier == "correlator") value = correlatorValue;
-            else if (!resolvedValues.TryGetValue(param.Identifier, out value))
-            {
-                continue;
-            }
-
-            value = Math.Clamp(value, (double)param.Min, (double)param.Max);
-
-            byte[] bytes = param.Type == IcdDataType.INTEGER
-                ? BitConverter.GetBytes((long)value)[..(param.Size / 8)]
-                : BitConverter.GetBytes((float)value);
-
-            if (param.Size % 8 == 0)
-            {
-                int byteOffset = fieldBitOffset / 8;
-                Array.Copy(bytes, 0, payload, byteOffset, bytes.Length);
-            }
-            else
-            {
-                int byteOffset = fieldBitOffset / 8;
-                int bitShift = fieldBitOffset % 8;
-                int mask = (1 << param.Size) - 1;
-                payload[byteOffset] |= (byte)(((int)value & mask) << bitShift);
-            }
+            WriteField(frame, param, value, fieldBitOffset);
         }
 
-        return payload;
+        return frame;
+    }
+
+    private static int CalculateFrameSize(IcdDocument icd)
+        => (icd.Params.Sum(param => param.Size) + BITS_PER_BYTE - 1) / BITS_PER_BYTE;
+
+    private static bool IsIncluded(IcdParam param, int correlatorValue)
+        => param.CorrValue == 0 || (correlatorValue & param.CorrValue) != 0;
+
+    private static bool TryResolveValue(IcdParam param, Dictionary<string, double> resolvedValues, int correlatorValue, out double value)
+    {
+        if (param.Identifier == CORRELATOR_PARAM_NAME)
+        {
+            value = correlatorValue;
+            return true;
+        }
+
+        return resolvedValues.TryGetValue(param.Identifier, out value);
+    }
+
+    private static void WriteField(byte[] payload, IcdParam param, double value, int fieldBitOffset)
+    {
+        value = Math.Clamp(value, param.Min, param.Max);
+
+        if (param.Size % BITS_PER_BYTE == 0)
+        {
+            // FLOAT is always 4 raw bytes
+            byte[] bytes = param.Type == IcdDataType.INTEGER
+                ? BitConverter.GetBytes((long)value)[..(param.Size / BITS_PER_BYTE)]
+                : BitConverter.GetBytes((float)value);
+
+            int byteOffset = fieldBitOffset / BITS_PER_BYTE;
+            Array.Copy(bytes, 0, payload, byteOffset, bytes.Length);
+        }
+        else
+        {
+            int byteOffset = fieldBitOffset / BITS_PER_BYTE;
+            int bitShift = fieldBitOffset % BITS_PER_BYTE;
+            int mask = (1 << param.Size) - 1;
+            // (byte) cast drops any bits past position 8, so fields crossing a byte boundary get truncated.
+            payload[byteOffset] |= (byte)(((int)value & mask) << bitShift);
+        }
     }
 }
