@@ -2,7 +2,7 @@
 
 namespace TelemetrySimulator.Resolving
 {
-    public class ValueResolver
+    public class Resolver
     {
         public Dictionary<string, double> Resolve(Dictionary<string, string> rawRow, MappingConfig mapping)
         {
@@ -14,6 +14,7 @@ namespace TelemetrySimulator.Resolving
                 {
                     res.Add(entry.Identifier, result);
                 }
+                // TODO handle parsing case
             }
             return res;
         }
