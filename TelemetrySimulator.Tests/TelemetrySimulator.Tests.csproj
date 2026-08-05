@@ -18,4 +18,12 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\TelemetrySimulator\TelemetrySimulator.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\TelemetrySimulator\Icd\MissionMapTable.json" Link="TestData\MissionMapTable.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
