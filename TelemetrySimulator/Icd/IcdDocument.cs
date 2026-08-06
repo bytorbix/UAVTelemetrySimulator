@@ -33,6 +33,12 @@ namespace TelemetrySimulator.Icd
                     throw new InvalidOperationException(
                         $"Duplicate ICD field identifier: '{param.Identifier}'.");
                 }
+
+                if (param.Type == IcdDataType.FLOAT && param.Size % 8 != 0)
+                {
+                    throw new InvalidOperationException(
+                        $"ICD field '{param.Identifier}' is FLOAT with Size {param.Size}, which is not byte-aligned. FLOAT fields must be a multiple of 8 bits.");
+                }
             }
         }
 

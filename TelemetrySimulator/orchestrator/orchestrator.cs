@@ -3,35 +3,40 @@ using TelemetrySimulator.Icd;
 using TelemetrySimulator.Mapping;
 using TelemetrySimulator.Resolving;
 
-public class Orchestrator(IcdDocument icd, MappingConfig mapping)
+public class Orchestrator(Encoder _encoder, Resolver _resolver)
 {
-    const string CORRELATOR_PARAM_NAME = "correlator";
-
-    Encoder _encoder = new();
-    Resolver _resolver = new();
-
-    public async Task SimulateAsync(List<Dictionary<string, string>> rawRecords, UdpClient socket, int intervalMs, int startIndex = 0, int? packetsCount = null)
+    public async Task SimulateAsync(IcdDocument icd, MappingConfig mapping, List<Dictionary<string, string>> rawRecords, UdpClient socket, int intervalMs, int tailNumber, int startIndex = 0, int? packetsCount = null)
     {
         IEnumerable<Dictionary<string, string>> rows = rawRecords.Skip(startIndex).Take(packetsCount ?? rawRecords.Count); // cut rows to desired index and amount
-
-        int correlatorRange = 1 << icd.GetField(CORRELATOR_PARAM_NAME).Size;
-        int correlatorValue = 0;
-
-        
 
         foreach (Dictionary<string, string> record in rows)
         {
             // resolve and map values from raw record to ICD identifiers
             Dictionary<string, double> resolvedValues = _resolver.Resolve(record, mapping);
 
-            byte[] frame = _encoder.BuildFrame(icd, resolvedValues, correlatorValue);
+            int groupMask = ComputeDirtyGroupMask(icd, resolvedValues);
+            byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask, tailNumber);
 
             await socket.SendAsync(frame, frame.Length);
-
-            correlatorValue = (correlatorValue + 1) % correlatorRange; // inc correaltor 
 
             await Task.Delay(intervalMs); // fixed interval ms between packets
         }
     }
 
+    private static int ComputeDirtyGroupMask(IcdDocument icd, Dictionary<string, double> resolvedValues)
+    {
+        int mask = 0;
+        
+        foreach (IcdParam param in icd.Params) 
+        {
+            if (param.CorrValue == 0) continue;
+            if (!resolvedValues.TryGetValue(param.Identifier, out double value)) continue;
+
+            bool dirty = param.PreviousValue is null || param.PreviousValue.Value != value;
+            if (dirty) mask |= param.CorrValue;
+
+            param.PreviousValue = value;
+        }
+        return mask;
+    }
 }
