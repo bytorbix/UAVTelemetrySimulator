@@ -30,6 +30,9 @@ namespace TelemetrySimulator.Icd
 
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
         public long Max { get; init; }
+
+        [JsonIgnore]
+        public double? PreviousValue { get; set; }
     }
 }
 

@@ -1,0 +1,24 @@
+{
+  "Entries": [
+    { "SourceColumn": "OSD.latitude", "Identifier": "latitude" },
+    { "SourceColumn": "OSD.longitude", "Identifier": "longitude" },
+    { "SourceColumn": "OSD.height [m]", "Identifier": "height" },
+    { "SourceColumn": "OSD.altitude [m]", "Identifier": "altitude" },
+    { "SourceColumn": "OSD.pitch", "Identifier": "pitch" },
+    { "SourceColumn": "OSD.roll", "Identifier": "roll" },
+    { "SourceColumn": "OSD.yaw", "Identifier": "yaw" },
+    { "SourceColumn": "OSD.xSpeed [m/s]", "Identifier": "x_speed" },
+    { "SourceColumn": "OSD.ySpeed [m/s]", "Identifier": "y_speed" },
+    { "SourceColumn": "OSD.zSpeed [m/s]", "Identifier": "z_speed" },
+    { "SourceColumn": "OSD.flycState.RAW", "Identifier": "flight_state" },
+    { "SourceColumn": "OSD.gpsNum", "Identifier": "gps_num" },
+    { "SourceColumn": "OSD.gpsLevel", "Identifier": "gps_level" },
+    { "SourceColumn": "OSD.battery", "Identifier": "battery" },
+    { "SourceColumn": "CENTER_BATTERY.currentPV [V]", "Identifier": "battery_voltage" },
+    { "SourceColumn": "HOME.latitude", "Identifier": "home_latitude" },
+    { "SourceColumn": "HOME.longitude", "Identifier": "home_longitude" },
+    { "SourceColumn": "GIMBAL.pitch", "Identifier": "gimbal_pitch" },
+    { "SourceColumn": "GIMBAL.roll", "Identifier": "gimbal_roll" },
+    { "SourceColumn": "GIMBAL.yaw", "Identifier": "gimbal_yaw" }
+  ]
+}
