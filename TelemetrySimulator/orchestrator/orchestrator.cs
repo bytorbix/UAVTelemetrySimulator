@@ -1,4 +1,4 @@
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using TelemetrySimulator.Icd;
 using TelemetrySimulator.Mapping;
@@ -12,6 +12,7 @@ public class Orchestrator(Encoder _encoder, Resolver _resolver)
 
         foreach (Dictionary<string, string> record in rows)
         {
+            // 😜
             cancellationToken.ThrowIfCancellationRequested();
 
             // resolve and map values from raw record to ICD identifiers

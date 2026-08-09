@@ -18,6 +18,7 @@ namespace TelemetrySimulator.Controllers
                 StartResult.Started => Accepted(),
                 StartResult.UploadNotFound => NotFound($"No pending upload found for tail number {tailNumber}."),
                 StartResult.AlreadyRunning => Conflict($"A simulation is already running for tail number {tailNumber}."),
+                StartResult.InvalidEndpoint => BadRequest($"Invalid host/port: '{request.Host}:{request.Port}'."),
                 _ => StatusCode(500)
             };
         }

@@ -11,6 +11,10 @@ namespace TelemetrySimulator.Controllers
         [HttpPost("{tailNumber:int}")]
         public async Task<IActionResult> Upload(int tailNumber, FileType fileType,IFormFile mappingFile, IFormFile rawFile)
         {
+            if (mappingFile is null || rawFile is null)
+            {
+                return BadRequest("Both mapping and raw files are invalid or not given.");
+            }
             var (result, error) = await uploadService.SaveUploadAsync(tailNumber, fileType, mappingFile.OpenReadStream(), rawFile.OpenReadStream());
             return result switch
             {

@@ -10,7 +10,7 @@ namespace TelemetrySimulator.Services
         Success,
         InvalidMapping
     }
-    public class UploadService(IcdDocument icd, UploadStore uploadStore)
+    public class UploadService(IcdDocument icd, UploadStore uploadStore, RecordReaderFactory recordReaderFactory)
     {
         public async Task<(UploadResult Result, string? Error)> SaveUploadAsync(int tailNumber, FileType fileType, Stream mappingStream, Stream dataStream) 
         {
@@ -22,12 +22,18 @@ namespace TelemetrySimulator.Services
                 // initial MappingConfig obj from raw stream
                 mappingJson = await reader.ReadToEndAsync();
                 mapping = MappingConfig.Load(mappingJson, icd);
-            } catch (InvalidOperationException ex)
+            }
+            catch (InvalidOperationException ex)
             {
                 return (UploadResult.InvalidMapping, ex.Message);
             }
+            catch (Exception ex) 
+            {
+                return (UploadResult.InvalidMapping, ex.Message);
+            }
+
             // initial records from raw file stream
-            List<Dictionary<string, string>> rawRecords = new RecordReaderFactory().Create(fileType).ReadRecords(dataStream);
+            List<Dictionary<string, string>> rawRecords = recordReaderFactory.Create(fileType).ReadRecords(dataStream);
             uploadStore.Save(tailNumber, new PendingUpload { RawRecords= rawRecords, Mapping=mapping });
 
             return (UploadResult.Success, null);

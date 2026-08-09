@@ -1,4 +1,5 @@
 using TelemetrySimulator.Icd;
+using TelemetrySimulator.Ingestion;
 using TelemetrySimulator.Resolving;
 using TelemetrySimulator.Services;
 using TelemetrySimulator.Storage;
@@ -19,6 +20,7 @@ builder.Services.AddSingleton<Encoder>();
 builder.Services.AddSingleton<Resolver>();
 builder.Services.AddSingleton<Orchestrator>();
 builder.Services.AddSingleton<SimulationRegistry>();
+builder.Services.AddSingleton<RecordReaderFactory>();
 
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
