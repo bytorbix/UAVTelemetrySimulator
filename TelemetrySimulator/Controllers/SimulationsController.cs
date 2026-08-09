@@ -3,14 +3,16 @@ using TelemetrySimulator.Services;
 
 namespace TelemetrySimulator.Controllers
 {
+    public record StartSimulationRequest(string Host, int Port, int IntervalMs, int StartIndex = 0, int? PacketsCount = null);
+
     [ApiController]
     [Route("api/simulations")]
     public class SimulationsController(SimulationService simulationService) : ControllerBase
     {
         [HttpPost("{tailNumber:int}/start")]
-        public IActionResult Start(int tailNumber, string host, int port, int intervalMs, int startIndex = 0, int? packetsCount = null)
+        public IActionResult Start(int tailNumber, [FromBody] StartSimulationRequest request)
         {
-            StartResult result = simulationService.Start(tailNumber, host, port, intervalMs, startIndex, packetsCount);
+            StartResult result = simulationService.Start(tailNumber, request.Host, request.Port, request.IntervalMs, request.StartIndex, request.PacketsCount);
             return result switch
             {
                 StartResult.Started => Accepted(),
