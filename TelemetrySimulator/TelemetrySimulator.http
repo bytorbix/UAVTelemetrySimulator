@@ -1,6 +1,18 @@
 @TelemetrySimulator_HostAddress = http://localhost:5196
 
-GET {{TelemetrySimulator_HostAddress}}/weatherforecast/
-Accept: application/json
+POST {{TelemetrySimulator_HostAddress}}/api/simulations/42/start
+Content-Type: application/json
+
+{
+  "host": "127.0.0.1",
+  "port": 5000,
+  "intervalMs": 1000,
+  "startIndex": 0,
+  "packetsCount": 100
+}
+
+###
+
+POST {{TelemetrySimulator_HostAddress}}/api/simulations/42/stop
 
 ###

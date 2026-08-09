@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <None Include="Icd\MissionMapTable.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="Mapping\DjiMapping.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="samples\DjiMapping.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="samples\**\*.csv" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

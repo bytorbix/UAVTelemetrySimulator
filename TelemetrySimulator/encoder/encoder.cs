@@ -39,12 +39,13 @@ public class Encoder
     // resolves a param's value, computed/external fields first, then CSV data, then a fixed ICD constant as last resort
     private static bool TryResolveValue(IcdParam param, Dictionary<string, double> resolvedValues, int groupMask, int tailNumber, out double value)
     {
+        // include correlator param
         if (param.Identifier == CORRELATOR_PARAM_NAME)
         {
             value = groupMask;
             return true;
         }
-
+        // include tail number param
         if (param.Identifier == TAIL_NUMBER_PARAM_NAME)
         {
             value = tailNumber;
