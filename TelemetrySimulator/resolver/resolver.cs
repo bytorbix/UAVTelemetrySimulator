@@ -1,4 +1,5 @@
-﻿using TelemetrySimulator.Mapping;
+﻿using System.Globalization;
+using TelemetrySimulator.Mapping;
 
 namespace TelemetrySimulator.Resolving
 {
@@ -13,6 +14,10 @@ namespace TelemetrySimulator.Resolving
                 if (double.TryParse(rawValue, out double result))
                 {
                     res.Add(entry.Identifier, result);
+                }
+                else if (DateTime.TryParse(rawValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
+                {
+                    res.Add(entry.Identifier, parsedDate.TimeOfDay.TotalMilliseconds);
                 }
                 // TODO handle parsing case
             }

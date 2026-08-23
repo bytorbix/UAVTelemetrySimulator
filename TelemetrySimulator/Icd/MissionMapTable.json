@@ -119,7 +119,7 @@
     "Location": "6",
     "CorrValue": "0",
     "Mask": "",
-    "Identifier": "timestamp",
+    "Identifier": "time",
     "Type": "INTEGER",
     "Units": "Unix seconds",
     "PhysicalLimitMin": "0",
@@ -128,7 +128,7 @@
     "InterfaceType": "4_BYTES",
     "Size": "32",
     "Min": "0",
-    "Max": "4294967295",
+    "Max": "86399999",
     "Length": "0",
     "Enum": ""
   },

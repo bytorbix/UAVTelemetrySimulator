@@ -1,5 +1,6 @@
 {
   "Entries": [
+    { "SourceColumn": "CUSTOM.updateTime", "Identifier": "time" },
     { "SourceColumn": "OSD.latitude", "Identifier": "latitude" },
     { "SourceColumn": "OSD.longitude", "Identifier": "longitude" },
     { "SourceColumn": "OSD.height [m]", "Identifier": "height" },
