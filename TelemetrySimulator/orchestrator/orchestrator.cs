@@ -10,13 +10,27 @@ public class Orchestrator(Encoder _encoder, Resolver _resolver)
     {
         IEnumerable<Dictionary<string, string>> rows = rawRecords.Skip(startIndex).Take(packetsCount ?? rawRecords.Count); // cut rows to desired index and amount
 
+        double offsetMs = 0;
+        foreach (MappingEntry entry in mapping.Entries) 
+        {
+            if (entry.Identifier == "time")
+            {
+                string row = rows.First()[entry.SourceColumn];
+                if (!(DateTime.TryParse(row, out DateTime dateTime)))
+                {
+                    throw new InvalidOperationException($"Failed to parse time-of-day for calibration from row value '{row}'.");
+                }
+                offsetMs = dateTime.TimeOfDay.TotalMilliseconds;
+            }
+        }
+
         foreach (Dictionary<string, string> record in rows)
         {
             // 😜
             cancellationToken.ThrowIfCancellationRequested();
 
             // resolve and map values from raw record to ICD identifiers
-            Dictionary<string, double> resolvedValues = _resolver.Resolve(record, mapping);
+            Dictionary<string, double> resolvedValues = _resolver.Resolve(record, mapping, offsetMs);
 
             int groupMask = ComputeDirtyGroupMask(icd, resolvedValues);
             byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask, tailNumber);

@@ -5,7 +5,7 @@ namespace TelemetrySimulator.Resolving
 {
     public class Resolver
     {
-        public Dictionary<string, double> Resolve(Dictionary<string, string> rawRow, MappingConfig mapping)
+        public Dictionary<string, double> Resolve(Dictionary<string, string> rawRow, MappingConfig mapping, double offsetMs)
         {
             Dictionary<string, double> res = new();
             foreach (MappingEntry entry in mapping.Entries)
@@ -17,7 +17,12 @@ namespace TelemetrySimulator.Resolving
                 }
                 else if (DateTime.TryParse(rawValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
                 {
-                    res.Add(entry.Identifier, parsedDate.TimeOfDay.TotalMilliseconds);
+                    double milliseconds = parsedDate.TimeOfDay.TotalMilliseconds;
+                    if (entry.Identifier == "time")
+                    {
+                        milliseconds -= offsetMs;
+                    }
+                    res.Add(entry.Identifier, milliseconds);
                 }
                 // TODO handle parsing case
             }
