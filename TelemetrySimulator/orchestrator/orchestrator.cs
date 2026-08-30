@@ -5,12 +5,15 @@ using TelemetrySimulator.Icd;
 using TelemetrySimulator.Mapping;
 using TelemetrySimulator.Resolving;
 
-public class Orchestrator(Encoder _encoder, Resolver _resolver)
+public class Orchestrator(Encoder _encoder, Resolver _resolver, ILogger<Orchestrator> _logger)
 {
     public async Task SimulateAsync(IcdDocument icd, MappingConfig mapping, List<Dictionary<string, string>> rawRecords, UdpClient socket, IPEndPoint remoteEndPoint, int intervalMs, int tailNumber, int startIndex = 0, int? packetsCount = null, CancellationToken cancellationToken = default)
     {
         IEnumerable<Dictionary<string, string>> rows = rawRecords.Skip(startIndex).Take(packetsCount ?? rawRecords.Count); // cut rows to desired index and amount
 
+        _logger.LogInformation("Tail {TailNumber}: starting send to {RemoteEndPoint} ({PacketCount} packets, {IntervalMs}ms interval)", tailNumber, remoteEndPoint, rows.Count(), intervalMs);
+
+        int sentCount = 0;
         foreach (Dictionary<string, string> record in rows)
         {
             // 😜
@@ -23,9 +26,13 @@ public class Orchestrator(Encoder _encoder, Resolver _resolver)
             byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask, tailNumber);
 
             await socket.SendAsync(frame, frame.Length, remoteEndPoint);
+            sentCount++;
+            _logger.LogInformation("Tail {TailNumber}: sent packet {SentCount} ({FrameLength} bytes) to {RemoteEndPoint}", tailNumber, sentCount, frame.Length, remoteEndPoint);
 
             await Task.Delay(intervalMs, cancellationToken); // fixed interval ms between packets
         }
+
+        _logger.LogInformation("Tail {TailNumber}: finished sending {SentCount} packets", tailNumber, sentCount);
     }
 
     private static int ComputeDirtyGroupMask(IcdDocument icd, Dictionary<string, double> resolvedValues)
