@@ -1,0 +1,87 @@
+{
+  "info": {
+    "_postman_id": "7e3b06cb-443b-4d11-83c4-2921c2195c6e",
+    "name": "Telemetry Simulator",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "55307522",
+    "_collection_link": "https://go.postman.co/collection/55307522-7e3b06cb-443b-4d11-83c4-2921c2195c6e?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Upload Files (42)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "rawFile",
+              "type": "file",
+              "src": "/C:/Users/bytor/source/repos/UAVTelemetrySimulator/TelemetrySimulator/samples/DJI_0001-TxtLogToCsv.csv"
+            },
+            {
+              "key": "mappingFile",
+              "type": "file",
+              "src": "/C:/Users/bytor/source/repos/UAVTelemetrySimulator/TelemetrySimulator/samples/DjiMapping.json"
+            },
+            {
+              "key": "fileType",
+              "value": "csv",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8082/api/uploads/42",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "uploads", "42"]
+        },
+        "description": "Must run before 'Start Simulation' for the same tail number -- the simulator returns UploadNotFound otherwise."
+      },
+      "response": []
+    },
+    {
+      "name": "Start Simulation",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"Host\": \"telemetry-device\",\r\n    \"Port\": 5000,\r\n    \"IntervalMs\": 100,\r\n    \"PacketsCount\": 50,\r\n    \"StartIndex\": 0\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8082/api/simulations/42/start",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "simulations", "42", "start"]
+        },
+        "description": "Host uses the telemetry-device container's docker-network DNS name (resolved server-side via Dns.GetHostAddresses), so it keeps working even if the container is recreated with a new IP."
+      },
+      "response": []
+    },
+    {
+      "name": "Stop Simulation",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8082/api/simulations/42/stop",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8082",
+          "path": ["api", "simulations", "42", "stop"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
