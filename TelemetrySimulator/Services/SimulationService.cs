@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Net;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using TelemetrySimulator.Icd;
 using TelemetrySimulator.Storage;
 
@@ -14,7 +12,7 @@ namespace TelemetrySimulator.Services
         AlreadyRunning,
         InvalidEndpoint
     }
-    public class SimulationService(Orchestrator orchestrator, UploadStore uploadStore, SimulationRegistry registry, IcdDocument icd)
+    public class SimulationService(Orchestrator orchestrator, UploadStore uploadStore, SimulationRegistry registry, IcdDocument icd) 
     {
         public StartResult Start(int tailNumber, string host, int port, int intervalMs, int startIndex, int? packetsCount)
         {
@@ -25,16 +23,11 @@ namespace TelemetrySimulator.Services
 
             if (!registry.TryRegister(tailNumber, cts)) return StartResult.AlreadyRunning;
 
-
+            
             UdpClient socket = new();
-            IPEndPoint remoteEndPoint;
             try
             {
-                IPAddress address = IPAddress.TryParse(host, out IPAddress? parsed)
-                    ? parsed
-                    : Dns.GetHostAddresses(host).FirstOrDefault()
-                        ?? throw new SocketException((int)SocketError.HostNotFound);
-                remoteEndPoint = new IPEndPoint(address, port);
+                socket.Connect(host, port);
             }
             catch (SocketException)
             {
@@ -42,18 +35,18 @@ namespace TelemetrySimulator.Services
                 registry.Unregister(tailNumber);
                 return StartResult.InvalidEndpoint;
             }
-
+            
 
             _ = Task.Run(async () =>
             {
-
+                
                 try
                 {
-                    await orchestrator.SimulateAsync(icd, upload.Mapping, upload.RawRecords, socket, remoteEndPoint, intervalMs, tailNumber, startIndex, packetsCount, cts.Token);
+                    await orchestrator.SimulateAsync(icd, upload.Mapping, upload.RawRecords, socket, intervalMs, tailNumber, startIndex, packetsCount, cts.Token);
                 }
                 catch (OperationCanceledException)
                 {
-
+                    
                 }
                 catch (Exception ex)
                 {
