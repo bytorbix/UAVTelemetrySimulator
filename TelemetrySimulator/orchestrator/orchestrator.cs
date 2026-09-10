@@ -7,12 +7,12 @@ using TelemetrySimulator.Resolving;
 
 public class Orchestrator(Encoder _encoder, Resolver _resolver, ILogger<Orchestrator> _logger)
 {
-    public async Task SimulateAsync(IcdDocument icd, MappingConfig mapping, List<Dictionary<string, string>> rawRecords, UdpClient socket, IPEndPoint remoteEndPoint, int intervalMs, int tailNumber, int startIndex = 0, int? packetsCount = null, CancellationToken cancellationToken = default)
+    public async Task SimulateAsync(IcdDocument icd, MappingConfig mapping, List<Dictionary<string, string>> rawRecords, UdpClient socket, IPEndPoint remoteEndPoint, int intervalMs, int tailNumber, int startIndex = 0, int? packetsCount = null, bool loop = false, CancellationToken cancellationToken = default)
     {
-        IEnumerable<Dictionary<string, string>> rows = rawRecords.Skip(startIndex).Take(packetsCount ?? rawRecords.Count); // cut rows to desired index and amount
+        List<Dictionary<string, string>> rows = rawRecords.Skip(startIndex).Take(packetsCount ?? rawRecords.Count).ToList(); // cut rows to desired index and amount
 
         double offsetMs = 0;
-        foreach (MappingEntry entry in mapping.Entries) 
+        foreach (MappingEntry entry in mapping.Entries)
         {
             if (entry.Identifier == "time")
             {
@@ -25,26 +25,29 @@ public class Orchestrator(Encoder _encoder, Resolver _resolver, ILogger<Orchestr
             }
         }
 
-        _logger.LogInformation("Tail {TailNumber}: starting send to {RemoteEndPoint} ({PacketCount} packets, {IntervalMs}ms interval)", tailNumber, remoteEndPoint, rows.Count(), intervalMs);
+        _logger.LogInformation("Tail {TailNumber}: starting send to {RemoteEndPoint} ({PacketCount} packets, {IntervalMs}ms interval, loop={Loop})", tailNumber, remoteEndPoint, rows.Count, intervalMs, loop);
 
         int sentCount = 0;
-        foreach (Dictionary<string, string> record in rows)
+        do
         {
-            // 😜
-            cancellationToken.ThrowIfCancellationRequested();
+            foreach (Dictionary<string, string> record in rows)
+            {
+                // 😜
+                cancellationToken.ThrowIfCancellationRequested();
 
-            // resolve and map values from raw record to ICD identifiers
-            Dictionary<string, double> resolvedValues = _resolver.Resolve(record, mapping, offsetMs);
+                // resolve and map values from raw record to ICD identifiers
+                Dictionary<string, double> resolvedValues = _resolver.Resolve(record, mapping, offsetMs);
 
-            int groupMask = ComputeDirtyGroupMask(icd, resolvedValues);
-            byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask, tailNumber);
+                int groupMask = ComputeDirtyGroupMask(icd, resolvedValues);
+                byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask, tailNumber);
 
-            await socket.SendAsync(frame, frame.Length, remoteEndPoint);
-            sentCount++;
-            _logger.LogInformation("Tail {TailNumber}: sent packet {SentCount} ({FrameLength} bytes) to {RemoteEndPoint}", tailNumber, sentCount, frame.Length, remoteEndPoint);
+                await socket.SendAsync(frame, frame.Length, remoteEndPoint);
+                sentCount++;
+                _logger.LogInformation("Tail {TailNumber}: sent packet {SentCount} ({FrameLength} bytes) to {RemoteEndPoint}", tailNumber, sentCount, frame.Length, remoteEndPoint);
 
-            await Task.Delay(intervalMs, cancellationToken); // fixed interval ms between packets
-        }
+                await Task.Delay(intervalMs, cancellationToken); // fixed interval ms between packets
+            }
+        } while (loop);
 
         _logger.LogInformation("Tail {TailNumber}: finished sending {SentCount} packets", tailNumber, sentCount);
     }
