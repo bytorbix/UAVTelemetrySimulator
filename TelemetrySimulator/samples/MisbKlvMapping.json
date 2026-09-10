@@ -1,0 +1,40 @@
+﻿{
+    "Entries": [
+        {
+            "SourceColumn": "pts_time",
+            "Identifier": "pts_time"
+        },
+        {
+            "SourceColumn": "precision_time_stamp_us",
+            "Identifier": "utc_time_us"
+        },
+        {
+            "SourceColumn": "utc_time",
+            "Identifier": "time"
+        },
+        {
+            "SourceColumn": "SensorLatitude",
+            "Identifier": "latitude"
+        },
+        {
+            "SourceColumn": "SensorLongitude",
+            "Identifier": "longitude"
+        },
+        {
+            "SourceColumn": "SensorTrueAltitude",
+            "Identifier": "altitude"
+        },
+        {
+            "SourceColumn": "PlatformPitchAngle",
+            "Identifier": "pitch"
+        },
+        {
+            "SourceColumn": "PlatformRollAngle",
+            "Identifier": "roll"
+        },
+        {
+            "SourceColumn": "PlatformHeadingAngle",
+            "Identifier": "yaw"
+        }
+    ]
+}
