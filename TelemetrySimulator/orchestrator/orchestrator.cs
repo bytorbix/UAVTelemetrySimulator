@@ -25,9 +25,12 @@ public class Orchestrator(Encoder _encoder, Resolver _resolver, ILogger<Orchestr
             }
         }
 
-        _logger.LogInformation("Tail {TailNumber}: starting send to {RemoteEndPoint} ({PacketCount} packets, {IntervalMs}ms interval, loop={Loop})", tailNumber, remoteEndPoint, rows.Count, intervalMs, loop);
+        string? ptsSourceColumn = mapping.Entries.FirstOrDefault(e => e.Identifier == "pts_time")?.SourceColumn;
+
+        _logger.LogInformation("Tail {TailNumber}: starting send to {RemoteEndPoint} ({PacketCount} packets, {IntervalMs}ms interval, loop={Loop}, pacedByRecordedPts={PacedByRecordedPts})", tailNumber, remoteEndPoint, rows.Count, intervalMs, loop, ptsSourceColumn is not null);
 
         int sentCount = 0;
+        double? previousPtsSeconds = null;
         do
         {
             foreach (Dictionary<string, string> record in rows)
@@ -45,7 +48,18 @@ public class Orchestrator(Encoder _encoder, Resolver _resolver, ILogger<Orchestr
                 sentCount++;
                 _logger.LogInformation("Tail {TailNumber}: sent packet {SentCount} ({FrameLength} bytes) to {RemoteEndPoint}", tailNumber, sentCount, frame.Length, remoteEndPoint);
 
-                await Task.Delay(intervalMs, cancellationToken); // fixed interval ms between packets
+                TimeSpan delay = TimeSpan.FromMilliseconds(intervalMs);
+                if (ptsSourceColumn is not null && double.TryParse(record[ptsSourceColumn], out double currentPtsSeconds))
+                {
+                    if (previousPtsSeconds is not null)
+                    {
+                        double deltaSeconds = currentPtsSeconds - previousPtsSeconds.Value;
+                        delay = deltaSeconds > 0 ? TimeSpan.FromSeconds(deltaSeconds) : TimeSpan.Zero;
+                    }
+                    previousPtsSeconds = currentPtsSeconds;
+                }
+
+                await Task.Delay(delay, cancellationToken); // paced by the recording's own pts deltas when available, else fixed interval
             }
         } while (loop);
 
