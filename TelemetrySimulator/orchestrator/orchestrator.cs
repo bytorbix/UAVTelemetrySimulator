@@ -7,10 +7,17 @@ using TelemetrySimulator.Resolving;
 
 public class Orchestrator(Encoder _encoder, Resolver _resolver, ILogger<Orchestrator> _logger)
 {
+<<<<<<< HEAD
     public async Task SimulateAsync(IcdDocument icd, MappingConfig mapping, List<Dictionary<string, string>> rawRecords, UdpClient socket, IPEndPoint remoteEndPoint, int intervalMs, int tailNumber, int startIndex = 0, int? packetsCount = null, bool loop = false, CancellationToken cancellationToken = default)
+=======
+    private const string TIME_IDENTIFIER = "time";
+
+    public async Task SimulateAsync(IcdDocument icd, MappingConfig mapping, List<Dictionary<string, string>> rawRecords, UdpClient socket, IPEndPoint remoteEndPoint, int intervalMs, int tailNumber, int startIndex = 0, int? packetsCount = null, CancellationToken cancellationToken = default)
+>>>>>>> 84c457f (refactored packet to emit current utc timestamp)
     {
         List<Dictionary<string, string>> rows = rawRecords.Skip(startIndex).Take(packetsCount ?? rawRecords.Count).ToList(); // cut rows to desired index and amount
 
+<<<<<<< HEAD
         double offsetMs = 0;
         foreach (MappingEntry entry in mapping.Entries)
         {
@@ -23,6 +30,42 @@ public class Orchestrator(Encoder _encoder, Resolver _resolver, ILogger<Orchestr
                 }
                 offsetMs = dateTime.TimeOfDay.TotalMilliseconds;
             }
+=======
+        double? previousTimeSeconds = null;
+
+        foreach (Dictionary<string, string> record in rows)
+        {
+            // 😜
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // resolve and map values from raw record to ICD identifiers
+            Dictionary<string, double> resolvedValues = _resolver.Resolve(record, mapping);
+
+            int groupMask = ComputeDirtyGroupMask(icd, resolvedValues);
+            byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask, tailNumber);
+
+            await socket.SendAsync(frame, frame.Length, remoteEndPoint);
+
+            // pace by the real gap between this row's and the previous row's timestamp, so
+            // playback cadence matches how the telemetry was actually recorded. intervalMs is
+            // only a fallback: for the first row (nothing to diff against) and for any row whose
+            // delta comes out non-positive (out-of-order/duplicate timestamps in the source data).
+            int delayMs = intervalMs;
+            if (resolvedValues.TryGetValue(TIME_IDENTIFIER, out double currentTimeSeconds))
+            {
+                if (previousTimeSeconds is double previous)
+                {
+                    double deltaSeconds = currentTimeSeconds - previous;
+                    if (deltaSeconds > 0)
+                    {
+                        delayMs = (int)Math.Round(deltaSeconds * 1000);
+                    }
+                }
+                previousTimeSeconds = currentTimeSeconds;
+            }
+
+            await Task.Delay(delayMs, cancellationToken);
+>>>>>>> 84c457f (refactored packet to emit current utc timestamp)
         }
 
         string? ptsSourceColumn = mapping.Entries.FirstOrDefault(e => e.Identifier == "pts_time")?.SourceColumn;
