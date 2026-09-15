@@ -1,7 +1,7 @@
 ﻿{
     "Entries": [
         {
-            "SourceColumn": "timestamp",
+            "SourceColumn": "utc_time",
             "Identifier": "time"
         },
         {
