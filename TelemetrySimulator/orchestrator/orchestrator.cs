@@ -7,9 +7,13 @@ using TelemetrySimulator.Resolving;
 
 public class Orchestrator(Encoder _encoder, Resolver _resolver)
 {
+    private const string TIME_IDENTIFIER = "time";
+
     public async Task SimulateAsync(IcdDocument icd, MappingConfig mapping, List<Dictionary<string, string>> rawRecords, UdpClient socket, IPEndPoint remoteEndPoint, int intervalMs, int tailNumber, int startIndex = 0, int? packetsCount = null, CancellationToken cancellationToken = default)
     {
         IEnumerable<Dictionary<string, string>> rows = rawRecords.Skip(startIndex).Take(packetsCount ?? rawRecords.Count); // cut rows to desired index and amount
+
+        double? previousTimeSeconds = null;
 
         foreach (Dictionary<string, string> record in rows)
         {
@@ -24,7 +28,25 @@ public class Orchestrator(Encoder _encoder, Resolver _resolver)
 
             await socket.SendAsync(frame, frame.Length, remoteEndPoint);
 
-            await Task.Delay(intervalMs, cancellationToken); // fixed interval ms between packets
+            // pace by the real gap between this row's and the previous row's timestamp, so
+            // playback cadence matches how the telemetry was actually recorded. intervalMs is
+            // only a fallback: for the first row (nothing to diff against) and for any row whose
+            // delta comes out non-positive (out-of-order/duplicate timestamps in the source data).
+            int delayMs = intervalMs;
+            if (resolvedValues.TryGetValue(TIME_IDENTIFIER, out double currentTimeSeconds))
+            {
+                if (previousTimeSeconds is double previous)
+                {
+                    double deltaSeconds = currentTimeSeconds - previous;
+                    if (deltaSeconds > 0)
+                    {
+                        delayMs = (int)Math.Round(deltaSeconds * 1000);
+                    }
+                }
+                previousTimeSeconds = currentTimeSeconds;
+            }
+
+            await Task.Delay(delayMs, cancellationToken);
         }
     }
 

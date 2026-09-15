@@ -7,6 +7,7 @@ public class Encoder
     const int BITS_PER_BYTE = 8;
     const string CORRELATOR_PARAM_NAME = "correlator";
     const string TAIL_NUMBER_PARAM_NAME = "Tail number";
+    const string TIME_PARAM_NAME = "time";
 
     public byte[] BuildFrame(IcdDocument icd, Dictionary<string, double> resolvedValues, int groupMask, int tailNumber)
     {
@@ -49,6 +50,12 @@ public class Encoder
         if (param.Identifier == TAIL_NUMBER_PARAM_NAME)
         {
             value = tailNumber;
+            return true;
+        }
+        // stamp with the live UTC clock at send time instead of the recorded source timestamp
+        if (param.Identifier == TIME_PARAM_NAME)
+        {
+            value = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
             return true;
         }
 

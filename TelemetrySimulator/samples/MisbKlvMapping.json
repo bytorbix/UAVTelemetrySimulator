@@ -1,0 +1,32 @@
+﻿{
+    "Entries": [
+        {
+            "SourceColumn": "timestamp",
+            "Identifier": "time"
+        },
+        {
+            "SourceColumn": "SensorLatitude",
+            "Identifier": "latitude"
+        },
+        {
+            "SourceColumn": "SensorLongitude",
+            "Identifier": "longitude"
+        },
+        {
+            "SourceColumn": "SensorTrueAltitude",
+            "Identifier": "altitude"
+        },
+        {
+            "SourceColumn": "PlatformPitchAngle",
+            "Identifier": "pitch"
+        },
+        {
+            "SourceColumn": "PlatformRollAngle",
+            "Identifier": "roll"
+        },
+        {
+            "SourceColumn": "PlatformHeadingAngle",
+            "Identifier": "yaw"
+        }
+    ]
+}
