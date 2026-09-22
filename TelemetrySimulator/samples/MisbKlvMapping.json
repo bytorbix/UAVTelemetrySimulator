@@ -1,7 +1,6 @@
 ﻿{
     "Entries": [
         {
-<<<<<<< HEAD
             "SourceColumn": "pts_time",
             "Identifier": "pts_time"
         },
@@ -11,9 +10,6 @@
         },
         {
             "SourceColumn": "utc_time",
-=======
-            "SourceColumn": "timestamp",
->>>>>>> 84c457f (refactored packet to emit current utc timestamp)
             "Identifier": "time"
         },
         {
