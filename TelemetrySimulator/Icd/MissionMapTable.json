@@ -121,21 +121,21 @@
     "Mask": "",
     "Identifier": "time",
     "Type": "INTEGER",
-    "Units": "Unix seconds",
+    "Units": "Milliseconds",
     "PhysicalLimitMin": "0",
-    "PhysicalLimitMax": "4294967295",
+    "PhysicalLimitMax": "9999999999999999",
     "PhysicalLimitDef": "0",
-    "InterfaceType": "4_BYTES",
-    "Size": "32",
+    "InterfaceType": "8_BYTES",
+    "Size": "64",
     "Min": "0",
-    "Max": "4294967295",
+    "Max": "9999999999999999",
     "Length": "0",
     "Enum": ""
   },
   {
     "Id": "8",
     "Error": "",
-    "Location": "10",
+    "Location": "14",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "latitude",
@@ -154,7 +154,7 @@
   {
     "Id": "9",
     "Error": "",
-    "Location": "14",
+    "Location": "18",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "longitude",
@@ -173,7 +173,7 @@
   {
     "Id": "10",
     "Error": "",
-    "Location": "18",
+    "Location": "22",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "height",
@@ -192,7 +192,7 @@
   {
     "Id": "11",
     "Error": "",
-    "Location": "22",
+    "Location": "26",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "altitude",
@@ -211,7 +211,7 @@
   {
     "Id": "12",
     "Error": "",
-    "Location": "26",
+    "Location": "30",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "pitch",
@@ -230,7 +230,7 @@
   {
     "Id": "13",
     "Error": "",
-    "Location": "30",
+    "Location": "34",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "roll",
@@ -249,7 +249,7 @@
   {
     "Id": "14",
     "Error": "",
-    "Location": "34",
+    "Location": "38",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "yaw",
@@ -268,7 +268,7 @@
   {
     "Id": "15",
     "Error": "",
-    "Location": "38",
+    "Location": "42",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "x_speed",
@@ -287,7 +287,7 @@
   {
     "Id": "16",
     "Error": "",
-    "Location": "42",
+    "Location": "46",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "y_speed",
@@ -306,7 +306,7 @@
   {
     "Id": "17",
     "Error": "",
-    "Location": "46",
+    "Location": "50",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "z_speed",
@@ -325,7 +325,7 @@
   {
     "Id": "18",
     "Error": "",
-    "Location": "50",
+    "Location": "54",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "flight_state",
@@ -344,7 +344,7 @@
   {
     "Id": "19",
     "Error": "",
-    "Location": "51",
+    "Location": "55",
     "CorrValue": "1",
     "Mask": "",
     "Identifier": "gps_num",
@@ -363,7 +363,7 @@
   {
     "Id": "20",
     "Error": "",
-    "Location": "52",
+    "Location": "56",
     "CorrValue": "1",
     "Mask": "",
     "Identifier": "gps_level",
@@ -382,7 +382,7 @@
   {
     "Id": "21",
     "Error": "",
-    "Location": "53",
+    "Location": "57",
     "CorrValue": "2",
     "Mask": "",
     "Identifier": "battery",
@@ -401,7 +401,7 @@
   {
     "Id": "22",
     "Error": "",
-    "Location": "54",
+    "Location": "58",
     "CorrValue": "2",
     "Mask": "",
     "Identifier": "battery_voltage",
@@ -420,7 +420,7 @@
   {
     "Id": "23",
     "Error": "",
-    "Location": "58",
+    "Location": "62",
     "CorrValue": "4",
     "Mask": "",
     "Identifier": "home_latitude",
@@ -439,7 +439,7 @@
   {
     "Id": "24",
     "Error": "",
-    "Location": "62",
+    "Location": "66",
     "CorrValue": "4",
     "Mask": "",
     "Identifier": "home_longitude",
@@ -458,7 +458,7 @@
   {
     "Id": "25",
     "Error": "",
-    "Location": "66",
+    "Location": "70",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "gimbal_pitch",
@@ -477,7 +477,7 @@
   {
     "Id": "26",
     "Error": "",
-    "Location": "70",
+    "Location": "74",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "gimbal_roll",
@@ -496,7 +496,7 @@
   {
     "Id": "27",
     "Error": "",
-    "Location": "74",
+    "Location": "78",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "gimbal_yaw",
@@ -515,7 +515,7 @@
   {
     "Id": "28",
     "Error": "",
-    "Location": "78",
+    "Location": "82",
     "CorrValue": "0",
     "Mask": "",
     "Identifier": "pts_time",
