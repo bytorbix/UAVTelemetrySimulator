@@ -128,7 +128,7 @@
     "InterfaceType": "4_BYTES",
     "Size": "32",
     "Min": "0",
-    "Max": "86399999",
+    "Max": "4294967295",
     "Length": "0",
     "Enum": ""
   },
@@ -528,25 +528,6 @@
     "Size": "32",
     "Min": "0",
     "Max": "999999",
-    "Length": "0",
-    "Enum": ""
-  },
-  {
-    "Id": "29",
-    "Error": "",
-    "Location": "82",
-    "CorrValue": "0",
-    "Mask": "",
-    "Identifier": "utc_time_us",
-    "Type": "INTEGER",
-    "Units": "Microseconds",
-    "PhysicalLimitMin": "0",
-    "PhysicalLimitMax": "9999999999999999",
-    "PhysicalLimitDef": "0",
-    "InterfaceType": "8_BYTES",
-    "Size": "64",
-    "Min": "0",
-    "Max": "9999999999999999",
     "Length": "0",
     "Enum": ""
   }
