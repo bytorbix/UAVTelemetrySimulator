@@ -1,67 +1,61 @@
-﻿using System.Net;
+﻿using System.Globalization;
+using System.Net;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using TelemetrySimulator.Icd;
 using TelemetrySimulator.Mapping;
 using TelemetrySimulator.Resolving;
+using TelemetrySimulator.Timing;
 
 public class Orchestrator(Encoder _encoder, Resolver _resolver, ILogger<Orchestrator> _logger)
 {
-    public async Task SimulateAsync(IcdDocument icd, MappingConfig mapping, List<Dictionary<string, string>> rawRecords, UdpClient socket, IPEndPoint remoteEndPoint, int intervalMs, int tailNumber, int startIndex = 0, int? packetsCount = null, bool loop = false, CancellationToken cancellationToken = default)
+    public async Task SimulateAsync(IcdDocument icd, MappingConfig mapping, List<Dictionary<string, string>> rawRecords, UdpClient socket, IPEndPoint remoteEndPoint, int tailNumber, DateTimeOffset startAt, int startIndex = 0, int? packetsCount = null, bool loop = false, double? loopLengthMs = null, CancellationToken cancellationToken = default)
     {
         List<Dictionary<string, string>> rows = rawRecords.Skip(startIndex).Take(packetsCount ?? rawRecords.Count).ToList(); // cut rows to desired index and amount
 
-        double offsetMs = 0;
-        foreach (MappingEntry entry in mapping.Entries)
+        string timeSourceColumn = mapping.Entries.FirstOrDefault(e => e.Identifier == "time")?.SourceColumn 
+            ?? throw new InvalidOperationException("Mapping has no 'time' entry; the recording clock needs row times.");
+
+        List<DateTimeOffset> rowTimes = new();
+        for (int i = 0; i < rows.Count; i++)
         {
-            if (entry.Identifier == "time")
-            {
-                string row = rows.First()[entry.SourceColumn];
-                if (!(DateTime.TryParse(row, out DateTime dateTime)))
-                {
-                    throw new InvalidOperationException($"Failed to parse time-of-day for calibration from row value '{row}'.");
-                }
-                offsetMs = dateTime.TimeOfDay.TotalMilliseconds;
-            }
+            string text = rows[i][timeSourceColumn];
+            if (!DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out DateTimeOffset time))
+                throw new InvalidOperationException($"Row {i}: could not read '{text}' as a time.");
+            rowTimes.Add(time);
         }
 
-        string? ptsSourceColumn = mapping.Entries.FirstOrDefault(e => e.Identifier == "pts_time")?.SourceColumn;
+        RecordingClock clock = new(rowTimes, startAt, loopLengthMs);
 
-        _logger.LogInformation("Tail {TailNumber}: starting send to {RemoteEndPoint} ({PacketCount} packets, {IntervalMs}ms interval, loop={Loop}, pacedByRecordedPts={PacedByRecordedPts})", tailNumber, remoteEndPoint, rows.Count, intervalMs, loop, ptsSourceColumn is not null);
+        _logger.LogInformation("Tail {TailNumber}: starting send to {RemoteEndPoint} ({PacketCount} packets, startAt={StartAt:O}, loop={Loop}, loopLengthMs={LoopLengthMs})", tailNumber, remoteEndPoint, rows.Count, startAt, loop, clock.LoopLengthMs);
 
         int sentCount = 0;
-        double? previousPtsSeconds = null;
+        int loopIndex = 0;
         do
         {
-            foreach (Dictionary<string, string> record in rows)
+            for (int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
             {
+                if (!clock.IsWithinLoop(rowIndex)) continue;
+                Dictionary<string, string> record = rows[rowIndex];
                 // 😜
                 cancellationToken.ThrowIfCancellationRequested();
 
                 // resolve and map values from raw record to ICD identifiers
-                Dictionary<string, double> resolvedValues = _resolver.Resolve(record, mapping, offsetMs);
+                Dictionary<string, double> resolvedValues = _resolver.Resolve(record, mapping);
 
                 int groupMask = ComputeDirtyGroupMask(icd, resolvedValues);
-                byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask, tailNumber);
+                byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask, tailNumber, clock.StampMs(rowIndex, loopIndex));
+
+                TimeSpan wait = clock.SendAt(rowIndex, loopIndex) - DateTimeOffset.UtcNow;
+                if (wait > TimeSpan.Zero) await Task.Delay(wait, cancellationToken);
 
                 await socket.SendAsync(frame, frame.Length, remoteEndPoint);
                 sentCount++;
                 _logger.LogInformation("Tail {TailNumber}: sent packet {SentCount} ({FrameLength} bytes) to {RemoteEndPoint}", tailNumber, sentCount, frame.Length, remoteEndPoint);
-
-                TimeSpan delay = TimeSpan.FromMilliseconds(intervalMs);
-                if (ptsSourceColumn is not null && double.TryParse(record[ptsSourceColumn], out double currentPtsSeconds))
-                {
-                    if (previousPtsSeconds is not null)
-                    {
-                        double deltaSeconds = currentPtsSeconds - previousPtsSeconds.Value;
-                        delay = deltaSeconds > 0 ? TimeSpan.FromSeconds(deltaSeconds) : TimeSpan.Zero;
-                    }
-                    previousPtsSeconds = currentPtsSeconds;
-                }
-
-                await Task.Delay(delay, cancellationToken); // paced by the recording's own pts deltas when available, else fixed interval
             }
+            loopIndex++;
         } while (loop);
+
 
         _logger.LogInformation("Tail {TailNumber}: finished sending {SentCount} packets", tailNumber, sentCount);
     }

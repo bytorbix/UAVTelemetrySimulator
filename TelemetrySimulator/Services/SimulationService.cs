@@ -16,7 +16,7 @@ namespace TelemetrySimulator.Services
     }
     public class SimulationService(Orchestrator orchestrator, UploadStore uploadStore, SimulationRegistry registry, IcdDocument icd)
     {
-        public StartResult Start(int tailNumber, string host, int port, int intervalMs, int startIndex, int? packetsCount, bool loop = false)
+        public StartResult Start(int tailNumber, string host, int port, DateTimeOffset startAt, int startIndex, int? packetsCount, bool loop = false, double? loopLengthMs = null)
         {
             if (port <= 0 || port > 65535) throw new ArgumentOutOfRangeException(nameof(port), "Port must be between 0 and 65535");
 
@@ -49,7 +49,7 @@ namespace TelemetrySimulator.Services
 
                 try
                 {
-                    await orchestrator.SimulateAsync(icd, upload.Mapping, upload.RawRecords, socket, remoteEndPoint, intervalMs, tailNumber, startIndex, packetsCount, loop, cts.Token);
+                    await orchestrator.SimulateAsync(icd, upload.Mapping, upload.RawRecords, socket, remoteEndPoint, tailNumber, startAt, startIndex, packetsCount, loop, loopLengthMs, cts.Token);
                 }
                 catch (OperationCanceledException)
                 {

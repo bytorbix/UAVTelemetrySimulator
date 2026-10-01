@@ -9,7 +9,7 @@ public class Encoder
     const string TAIL_NUMBER_PARAM_NAME = "Tail number";
     const string TIME_PARAM_NAME = "time";
 
-    public byte[] BuildFrame(IcdDocument icd, Dictionary<string, double> resolvedValues, int groupMask, int tailNumber)
+    public byte[] BuildFrame(IcdDocument icd, Dictionary<string, double> resolvedValues, int groupMask, int tailNumber, long timeMs)
     {
         byte[] frame = new byte[CalculateFrameSize(icd)];
 
@@ -23,7 +23,7 @@ public class Encoder
 
             if (!IsIncluded(param, groupMask)) continue;
 
-            if (!TryResolveValue(param, resolvedValues, groupMask, tailNumber, out double value)) continue;
+            if (!TryResolveValue(param, resolvedValues, groupMask, tailNumber, timeMs, out double value)) continue;
 
             WriteField(frame, param, value, fieldBitOffset);
         }
@@ -38,7 +38,7 @@ public class Encoder
         => param.CorrValue == 0 || (groupMask & param.CorrValue) != 0;
 
     // resolves a param's value, computed/external fields first, then CSV data, then a fixed ICD constant as last resort
-    private static bool TryResolveValue(IcdParam param, Dictionary<string, double> resolvedValues, int groupMask, int tailNumber, out double value)
+    private static bool TryResolveValue(IcdParam param, Dictionary<string, double> resolvedValues, int groupMask, int tailNumber, long timeMs, out double value)
     {
         // include correlator param
         if (param.Identifier == CORRELATOR_PARAM_NAME)
@@ -52,10 +52,10 @@ public class Encoder
             value = tailNumber;
             return true;
         }
-        // stamp with the live UTC clock at send time instead of the recorded source timestamp
+        // stamp handed in by the caller
         if (param.Identifier == TIME_PARAM_NAME)
         {
-            value = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            value = timeMs;
             return true;
         }
 
