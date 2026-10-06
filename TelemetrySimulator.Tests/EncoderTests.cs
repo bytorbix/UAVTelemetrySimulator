@@ -221,6 +221,6 @@ public class EncoderTests
 
         // correlator low nibble reflects groupMask (0 here); latitude comes straight from the CSV row
         Assert.Equal(0, frame[5] & 0b0000_1111);
-        Assert.Equal(24.013433f, BitConverter.ToSingle(frame, 10));
+        Assert.Equal(24.013433f, BitConverter.ToSingle(frame, 14));
     }
 }
