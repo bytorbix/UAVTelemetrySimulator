@@ -55,7 +55,7 @@ public class Encoder
         // stamp with the live UTC clock at send time instead of the recorded source timestamp
         if (param.Identifier == TIME_PARAM_NAME)
         {
-            value = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
+            value = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             return true;
         }
 

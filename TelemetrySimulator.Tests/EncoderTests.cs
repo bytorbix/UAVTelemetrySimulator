@@ -206,7 +206,7 @@ public class EncoderTests
         using FileStream csvStream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "TestData", "DJI_0001-TxtLogToCsv.csv"));
         List<Dictionary<string, string>> rawRecords = new CsvRecordReader().ReadRecords(csvStream);
 
-        Dictionary<string, double> resolvedValues = new Resolver().Resolve(rawRecords[0], mapping);
+        Dictionary<string, double> resolvedValues = new Resolver().Resolve(rawRecords[0], mapping, offsetMs: 0);
 
         byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask: 0, tailNumber: 42);
 

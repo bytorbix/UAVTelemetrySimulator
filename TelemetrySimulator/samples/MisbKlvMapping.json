@@ -1,6 +1,10 @@
 ﻿{
     "Entries": [
         {
+            "SourceColumn": "pts_time",
+            "Identifier": "pts_time"
+        },
+        {
             "SourceColumn": "utc_time",
             "Identifier": "time"
         },
