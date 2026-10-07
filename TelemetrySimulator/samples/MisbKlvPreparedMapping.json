@@ -1,0 +1,17 @@
+{
+  "Entries": [
+    { "SourceColumn": "pts_time", "Identifier": "pts_time" },
+    { "SourceColumn": "utc_time", "Identifier": "time" },
+    { "SourceColumn": "SensorLatitude", "Identifier": "latitude" },
+    { "SourceColumn": "SensorLongitude", "Identifier": "longitude" },
+    { "SourceColumn": "SensorTrueAltitude", "Identifier": "altitude" },
+    { "SourceColumn": "PlatformPitchAngle", "Identifier": "pitch" },
+    { "SourceColumn": "PlatformRollAngle", "Identifier": "roll" },
+    { "SourceColumn": "prep_yaw", "Identifier": "yaw" },
+    { "SourceColumn": "prep_gimbal_yaw", "Identifier": "gimbal_yaw" },
+    { "SourceColumn": "prep_gimbal_pitch", "Identifier": "gimbal_pitch" },
+    { "SourceColumn": "prep_gimbal_roll", "Identifier": "gimbal_roll" },
+    { "SourceColumn": "SensorHorizontalFOV", "Identifier": "fov_h" },
+    { "SourceColumn": "SensorVerticalFOV", "Identifier": "fov_v" }
+  ]
+}

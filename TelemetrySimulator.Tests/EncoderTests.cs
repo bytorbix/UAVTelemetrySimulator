@@ -221,6 +221,57 @@ public class EncoderTests
 
         // correlator low nibble reflects groupMask (0 here); latitude comes straight from the CSV row
         Assert.Equal(0, frame[5] & 0b0000_1111);
-        Assert.Equal(24.013433f, BitConverter.ToSingle(frame, 10));
+        Assert.Equal(24.013433f, BitConverter.ToSingle(frame, 14));
+    }
+
+    [Fact]
+    public void PreparedMisbRow_EncodesAbsoluteCameraAnglesAndFov()
+    {
+        string icdJson = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "MissionMapTable.json"));
+        IcdDocument icd = IcdDocument.Load(icdJson);
+
+        string mappingJson = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "MisbKlvPreparedMapping.json"));
+        MappingConfig mapping = MappingConfig.Load(mappingJson, icd);
+
+        // first Cheyenne row after tools/prep_dataset.py misb
+        Dictionary<string, string> row = new()
+        {
+            ["pts_time"] = "137.827200",
+            ["utc_time"] = "2012-09-19T20:40:44.105300+00:00",
+            ["SensorLatitude"] = "41.143845660213316",
+            ["SensorLongitude"] = "-104.80559675246738",
+            ["SensorTrueAltitude"] = "2936.3714045929655",
+            ["PlatformPitchAngle"] = "4.179815057832574",
+            ["PlatformRollAngle"] = "-4.263435773796807",
+            ["prep_yaw"] = "-158.727397574",
+            ["prep_gimbal_yaw"] = "110.034439615",
+            ["prep_gimbal_pitch"] = "-31.038044828",
+            ["prep_gimbal_roll"] = "-4.558378321",
+            ["SensorHorizontalFOV"] = "18.652323186083773",
+            ["SensorVerticalFOV"] = "10.49210345616846",
+        };
+
+        Dictionary<string, double> resolvedValues = new Resolver().Resolve(row, mapping, offsetMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask: 0, tailNumber: 42);
+
+        // heading 201 deg arrives wrapped to -158.7, inside the ICD's [-180, 180] instead of clamped to 180
+        Assert.Equal(-158.7274f, BitConverter.ToSingle(frame, 38), 3);
+        Assert.Equal(-31.038044f, BitConverter.ToSingle(frame, 70), 3);
+        Assert.Equal(110.03444f, BitConverter.ToSingle(frame, 78), 3);
+        Assert.Equal(18.652323f, BitConverter.ToSingle(frame, 86), 3);
+        Assert.Equal(10.492103f, BitConverter.ToSingle(frame, 90), 3);
+    }
+
+    [Fact]
+    public void PreparedDjiMapping_OnlyReferencesIcdIdentifiers()
+    {
+        string icdJson = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "MissionMapTable.json"));
+        IcdDocument icd = IcdDocument.Load(icdJson);
+
+        string mappingJson = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "DjiPreparedMapping.json"));
+
+        MappingConfig mapping = MappingConfig.Load(mappingJson, icd);
+
+        Assert.Contains(mapping.Entries, e => e.SourceColumn == "prep_altitude_msl" && e.Identifier == "altitude");
     }
 }

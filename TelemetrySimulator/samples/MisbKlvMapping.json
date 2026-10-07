@@ -5,10 +5,6 @@
             "Identifier": "pts_time"
         },
         {
-            "SourceColumn": "precision_time_stamp_us",
-            "Identifier": "utc_time_us"
-        },
-        {
             "SourceColumn": "utc_time",
             "Identifier": "time"
         },
