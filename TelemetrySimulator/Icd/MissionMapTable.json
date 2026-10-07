@@ -530,5 +530,43 @@
     "Max": "999999",
     "Length": "0",
     "Enum": ""
+  },
+  {
+    "Id": "29",
+    "Error": "",
+    "Location": "86",
+    "CorrValue": "0",
+    "Mask": "",
+    "Identifier": "fov_h",
+    "Type": "FLOAT",
+    "Units": "Degrees",
+    "PhysicalLimitMin": "0",
+    "PhysicalLimitMax": "180",
+    "PhysicalLimitDef": "0",
+    "InterfaceType": "4_BYTES",
+    "Size": "32",
+    "Min": "0",
+    "Max": "180",
+    "Length": "0",
+    "Enum": ""
+  },
+  {
+    "Id": "30",
+    "Error": "",
+    "Location": "90",
+    "CorrValue": "0",
+    "Mask": "",
+    "Identifier": "fov_v",
+    "Type": "FLOAT",
+    "Units": "Degrees",
+    "PhysicalLimitMin": "0",
+    "PhysicalLimitMax": "180",
+    "PhysicalLimitDef": "0",
+    "InterfaceType": "4_BYTES",
+    "Size": "32",
+    "Min": "0",
+    "Max": "180",
+    "Length": "0",
+    "Enum": ""
   }
 ]
