@@ -516,7 +516,7 @@
     "Id": "28",
     "Error": "",
     "Location": "82",
-    "CorrValue": "0",
+    "CorrValue": "8",
     "Mask": "",
     "Identifier": "pts_time",
     "Type": "FLOAT",
