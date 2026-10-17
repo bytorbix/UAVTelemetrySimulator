@@ -25,9 +25,12 @@ public class Orchestrator(Encoder _encoder, Resolver _resolver, ILogger<Orchestr
             rowTimes.Add(time);
         }
 
-        RecordingClock clock = new(rowTimes, startAt, loopLengthMs);
+        // a past startAt is an archive replay: keep its stamps, but send from now so it still plays in real time
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        DateTimeOffset sendAnchor = startAt > now ? startAt : now;
+        RecordingClock clock = new(rowTimes, startAt, loopLengthMs, sendAnchor);
 
-        _logger.LogInformation("Tail {TailNumber}: starting send to {RemoteEndPoint} ({PacketCount} packets, startAt={StartAt:O}, loop={Loop}, loopLengthMs={LoopLengthMs})", tailNumber, remoteEndPoint, rows.Count, startAt, loop, clock.LoopLengthMs);
+        _logger.LogInformation("Tail {TailNumber}: starting send to {RemoteEndPoint} ({PacketCount} packets, startAt={StartAt:O}, sendAnchor={SendAnchor:O}, loop={Loop}, loopLengthMs={LoopLengthMs})", tailNumber, remoteEndPoint, rows.Count, startAt, sendAnchor, loop, clock.LoopLengthMs);
 
         int sentCount = 0;
         int loopIndex = 0;

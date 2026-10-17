@@ -48,6 +48,17 @@ public class RecordingClockTests
     }
 
     [Fact]
+    public void PastStartAt_KeepsItsStampsButSendsFromTheAnchor()
+    {
+        DateTimeOffset anchor = StartAt.AddYears(7);
+        RecordingClock clock = new(Rows(5), StartAt, loopLengthMs: null, sendAnchor: anchor);
+
+        Assert.Equal(StartAtPlus(300), clock.StampMs(3, loopIndex: 0));
+        Assert.Equal(anchor.AddMilliseconds(300), clock.SendAt(3, loopIndex: 0));
+        Assert.Equal(anchor.AddMilliseconds(700), clock.SendAt(2, loopIndex: 1)); // 500 ms loop + 200 ms
+    }
+
+    [Fact]
     public void RecordingAcrossMidnight_KeepsCountingForward()
     {
         List<DateTimeOffset> rows = new()

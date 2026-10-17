@@ -5,11 +5,13 @@ namespace TelemetrySimulator.Timing
     {
         private readonly IReadOnlyList<DateTimeOffset> _rowTimes;
         private readonly long _startAtMs;
+        private readonly long _sendAnchorMs;
 
         public double LoopLengthMs { get; }
 
         // loopLengthMs: the run's shared loop length (same value the video gets); null = derive it from this recording
-        public RecordingClock(IReadOnlyList<DateTimeOffset> rowTimes, DateTimeOffset startAt, double? loopLengthMs = null)
+        // sendAnchor: the wall-clock moment row 0 is sent; null = startAt. A past startAt (archive replay) still paces in real time from the anchor
+        public RecordingClock(IReadOnlyList<DateTimeOffset> rowTimes, DateTimeOffset startAt, double? loopLengthMs = null, DateTimeOffset? sendAnchor = null)
         {
             if (rowTimes.Count == 0)
                 throw new ArgumentException("Recording has no rows.", nameof(rowTimes));
@@ -23,6 +25,7 @@ namespace TelemetrySimulator.Timing
 
             _rowTimes = rowTimes;
             _startAtMs = startAt.ToUnixTimeMilliseconds();
+            _sendAnchorMs = (sendAnchor ?? startAt).ToUnixTimeMilliseconds();
 
             LoopLengthMs = loopLengthMs ?? DeriveLoopLengthMs();
         }
@@ -40,10 +43,11 @@ namespace TelemetrySimulator.Timing
         // with a shared loop length shorter than the recording, rows past it would overlap the next loop, so they're skipped
         public bool IsWithinLoop(int rowIndex) => PositionMs(rowIndex) < LoopLengthMs;
 
-        public long StampMs(int rowIndex, int loopIndex)
-            => _startAtMs + (long)Math.Round(PositionMs(rowIndex) + loopIndex * LoopLengthMs);
+        private long OffsetMs(int rowIndex, int loopIndex) => (long)Math.Round(PositionMs(rowIndex) + loopIndex * LoopLengthMs);
 
-        // rows are sent at the moment their stamp names, so the stamp and the send schedule can't disagree
-        public DateTimeOffset SendAt(int rowIndex, int loopIndex) => DateTimeOffset.FromUnixTimeMilliseconds(StampMs(rowIndex, loopIndex));
+        public long StampMs(int rowIndex, int loopIndex) => _startAtMs + OffsetMs(rowIndex, loopIndex);
+
+        // stamp and send share the same offset, so they stay a fixed distance apart (zero when the anchor is startAt)
+        public DateTimeOffset SendAt(int rowIndex, int loopIndex) => DateTimeOffset.FromUnixTimeMilliseconds(_sendAnchorMs + OffsetMs(rowIndex, loopIndex));
     }
 }

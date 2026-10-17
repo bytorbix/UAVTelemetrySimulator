@@ -12,7 +12,6 @@ namespace TelemetrySimulator.Controllers
         [HttpPost("{tailNumber:int}/start")]
         public IActionResult Start(int tailNumber, [FromBody] StartSimulationRequest request)
         {
-            if (request.StartAt < DateTimeOffset.UtcNow) return BadRequest($"StartAt '{request.StartAt:O}' is already in the past.");
             if (request.LoopLengthMs <= 0) return BadRequest($"LoopLengthMs must be positive, got {request.LoopLengthMs}.");
 
             DateTimeOffset startAt = request.StartAt ?? DateTimeOffset.UtcNow;
