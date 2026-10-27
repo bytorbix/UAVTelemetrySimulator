@@ -34,6 +34,14 @@ namespace TelemetrySimulator.Services
 
             // initial records from raw file stream
             List<Dictionary<string, string>> rawRecords = recordReaderFactory.Create(fileType).ReadRecords(dataStream);
+
+            // a mapped column the file doesn't have would otherwise be sent as 0 in every packet
+            if (rawRecords.Count == 0)
+                return (UploadResult.InvalidMapping, "The telemetry file has no rows.");
+            List<string> missing = mapping.Entries.Select(e => e.SourceColumn).Where(c => !rawRecords[0].ContainsKey(c)).ToList();
+            if (missing.Count > 0)
+                return (UploadResult.InvalidMapping, $"The telemetry file has no column(s) {string.Join(", ", missing.Select(c => $"'{c}'"))}, which the mapping uses.");
+
             uploadStore.Save(tailNumber, new PendingUpload { RawRecords= rawRecords, Mapping=mapping });
 
             return (UploadResult.Success, null);

@@ -25,8 +25,9 @@
 
   <ItemGroup>
     <None Include="..\TelemetrySimulator\Icd\MissionMapTable.json" Link="TestData\MissionMapTable.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="TestData\DjiMapping.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="TestData\DJI_0001-TxtLogToCsv.csv" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="TestData\MisbMapping.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="TestData\Flights_DJI_0001_telemetry.csv" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="TestData\Flights_Cheyenne_telemetry.csv" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

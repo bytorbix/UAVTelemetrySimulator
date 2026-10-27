@@ -1,0 +1,56 @@
+{
+  "Entries": [
+    {
+      "SourceColumn": "PrecisionTimeStamp",
+      "Identifier": "PrecisionTimeStamp"
+    },
+    {
+      "SourceColumn": "PlatformHeadingAngle",
+      "Identifier": "PlatformHeadingAngle"
+    },
+    {
+      "SourceColumn": "PlatformPitchAngle",
+      "Identifier": "PlatformPitchAngle"
+    },
+    {
+      "SourceColumn": "PlatformRollAngle",
+      "Identifier": "PlatformRollAngle"
+    },
+    {
+      "SourceColumn": "SensorLatitude",
+      "Identifier": "SensorLatitude"
+    },
+    {
+      "SourceColumn": "SensorLongitude",
+      "Identifier": "SensorLongitude"
+    },
+    {
+      "SourceColumn": "SensorTrueAltitude",
+      "Identifier": "SensorTrueAltitude"
+    },
+    {
+      "SourceColumn": "SensorEllipsoidHeight",
+      "Identifier": "SensorEllipsoidHeight"
+    },
+    {
+      "SourceColumn": "SensorHorizontalFieldOfView",
+      "Identifier": "SensorHorizontalFieldOfView"
+    },
+    {
+      "SourceColumn": "SensorVerticalFieldOfView",
+      "Identifier": "SensorVerticalFieldOfView"
+    },
+    {
+      "SourceColumn": "SensorRelativeAzimuthAngle",
+      "Identifier": "SensorRelativeAzimuthAngle"
+    },
+    {
+      "SourceColumn": "SensorRelativeElevationAngle",
+      "Identifier": "SensorRelativeElevationAngle"
+    },
+    {
+      "SourceColumn": "SensorRelativeRollAngle",
+      "Identifier": "SensorRelativeRollAngle"
+    }
+  ]
+}

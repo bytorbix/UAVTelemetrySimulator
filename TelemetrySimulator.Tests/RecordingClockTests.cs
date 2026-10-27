@@ -1,3 +1,4 @@
+using TelemetrySimulator.Mapping;
 using TelemetrySimulator.Timing;
 
 namespace TelemetrySimulator.Tests;
@@ -110,5 +111,57 @@ public class RecordingClockTests
 
         Assert.True(clock.IsWithinLoop(2));  // position 200
         Assert.False(clock.IsWithinLoop(3)); // position 300, would overlap the next loop's first row
+    }
+
+    [Fact]
+    public void PtsPositions_StampEachRowWhereItSitsOnTheVideo()
+    {
+        // MISB telemetry often starts a little after the first video frame
+        RecordingClock clock = new(new List<double> { 183.556, 383.6 }, StartAt);
+
+        Assert.Equal(StartAtPlus(184), clock.StampMs(0, loopIndex: 0));
+        Assert.Equal(StartAt.ToUnixTimeMilliseconds() * 1000 + 183_556, clock.StampUs(0, loopIndex: 0));
+        Assert.Equal(StartAtPlus(384), clock.SendAt(1, loopIndex: 0).ToUnixTimeMilliseconds()); // sends are paced to the nearest ms
+    }
+
+    [Fact]
+    public void RowPositions_UsePtsTimeColumnWhenPresent()
+    {
+        List<Dictionary<string, string>> rows = new()
+        {
+            new() { ["pts_time"] = "-0.016644", ["PrecisionTimeStamp"] = "1348087245793967" },
+            new() { ["pts_time"] = "0.183556", ["PrecisionTimeStamp"] = "1348087245993999" },
+        };
+        // pts_time is a CSV column read directly, not a mapped ICD field
+        MappingConfig mapping = new() { Entries = new() { new() { SourceColumn = "PrecisionTimeStamp", Identifier = "PrecisionTimeStamp" } } };
+
+        Assert.Equal(new[] { -16.644, 183.556 }, Orchestrator.RowPositionsMs(rows, mapping).Select(p => Math.Round(p, 3)));
+    }
+
+    [Fact]
+    public void RowPositions_RejectAnUnreadablePtsTime()
+    {
+        List<Dictionary<string, string>> rows = new()
+        {
+            new() { ["pts_time"] = "0.0", ["PrecisionTimeStamp"] = "1348087245793967" },
+            new() { ["pts_time"] = "", ["PrecisionTimeStamp"] = "1348087245993999" },
+        };
+        MappingConfig mapping = new() { Entries = new() { new() { SourceColumn = "PrecisionTimeStamp", Identifier = "PrecisionTimeStamp" } } };
+
+        InvalidOperationException error = Assert.Throws<InvalidOperationException>(() => Orchestrator.RowPositionsMs(rows, mapping));
+        Assert.Contains("Row 1", error.Message);
+    }
+
+    [Fact]
+    public void RowPositions_FallBackToMicrosecondStamps()
+    {
+        List<Dictionary<string, string>> rows = new()
+        {
+            new() { ["t"] = "1348087245793967" },
+            new() { ["t"] = "1348087245993999" },
+        };
+        MappingConfig mapping = new() { Entries = new() { new() { SourceColumn = "t", Identifier = "PrecisionTimeStamp" } } };
+
+        Assert.Equal(new[] { 0.0, 200.032 }, Orchestrator.RowPositionsMs(rows, mapping).Select(p => Math.Round(p, 3)));
     }
 }

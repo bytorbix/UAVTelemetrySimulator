@@ -10,17 +10,13 @@ namespace TelemetrySimulator.Resolving
             Dictionary<string, double> res = new();
             foreach (MappingEntry entry in mapping.Entries)
             {
-                string rawValue = rawRow[entry.SourceColumn];
-                if (double.TryParse(rawValue, out double result))
+                // columns are checked at upload; a blank cell stays unresolved and the encoder leaves that field at zero
+                // (Flights rows are never blank). PrecisionTimeStamp is always the clock's stamp, never the cell.
+                string rawValue = rawRow.GetValueOrDefault(entry.SourceColumn) ?? "";
+                if (double.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out double result))
                 {
                     res.Add(entry.Identifier, result);
                 }
-                else if (DateTime.TryParse(rawValue, CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime parsedDate))
-                {
-                    double milliseconds = parsedDate.TimeOfDay.TotalMilliseconds;
-                    res.Add(entry.Identifier, milliseconds);
-                }
-                // TODO handle parsing case
             }
             return res;
         }

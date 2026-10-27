@@ -24,7 +24,7 @@ public class EncoderTests
             Max = 255,
         });
 
-        byte[] frame = _encoder.BuildFrame(icd, new() { ["flight_state"] = 42 }, groupMask: 0, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, new() { ["flight_state"] = 42 }, groupMask: 0, tailNumber: 0, timeUs: 0);
 
         Assert.Equal(new byte[] { 42 }, frame);
     }
@@ -36,7 +36,7 @@ public class EncoderTests
             new IcdParam { Identifier = "sync", Type = IcdDataType.INTEGER, Size = 8, Min = 0, Max = 255 },
             new IcdParam { Identifier = "tail", Type = IcdDataType.INTEGER, Size = 16, Min = 0, Max = 65000 });
 
-        byte[] frame = _encoder.BuildFrame(icd, new() { ["sync"] = 176, ["tail"] = 1234 }, groupMask: 0, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, new() { ["sync"] = 176, ["tail"] = 1234 }, groupMask: 0, tailNumber: 0, timeUs: 0);
 
         // tail = 1234 = 0x04D2, little-endian low byte first
         Assert.Equal(new byte[] { 176, 0xD2, 0x04 }, frame);
@@ -54,7 +54,7 @@ public class EncoderTests
             Max = 90,
         });
 
-        byte[] frame = _encoder.BuildFrame(icd, new() { ["latitude"] = 12.5 }, groupMask: 0, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, new() { ["latitude"] = 12.5 }, groupMask: 0, tailNumber: 0, timeUs: 0);
 
         Assert.Equal(BitConverter.GetBytes(12.5f), frame);
     }
@@ -67,7 +67,7 @@ public class EncoderTests
             new IcdParam { Identifier = "correlator", Type = IcdDataType.INTEGER, Size = 4, Min = 0, Max = 15 },
             new IcdParam { Identifier = "zero_space", Type = IcdDataType.INTEGER, Size = 4, Min = 0, Max = 0 });
 
-        byte[] frame = _encoder.BuildFrame(icd, new(), groupMask: 5, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, new(), groupMask: 5, tailNumber: 0, timeUs: 0);
 
         // correlator occupies the low nibble; zero_space has no resolved value so it's left at 0.
         Assert.Equal(new byte[] { 0b0000_0101 }, frame);
@@ -85,7 +85,7 @@ public class EncoderTests
             Max = 15,
         });
 
-        byte[] frame = _encoder.BuildFrame(icd, new() { ["correlator"] = 99 }, groupMask: 7, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, new() { ["correlator"] = 99 }, groupMask: 7, tailNumber: 0, timeUs: 0);
 
         Assert.Equal(new byte[] { 7 }, frame);
     }
@@ -105,7 +105,7 @@ public class EncoderTests
             Max = 100,
         });
 
-        byte[] frame = _encoder.BuildFrame(icd, new() { ["battery"] = 50 }, groupMask, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, new() { ["battery"] = 50 }, groupMask, tailNumber: 0, timeUs: 0);
 
         Assert.Equal(expectedIncluded ? 50 : 0, frame[0]);
     }
@@ -122,7 +122,7 @@ public class EncoderTests
             Max = 100,
         });
 
-        byte[] frame = _encoder.BuildFrame(icd, new(), groupMask: 0, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, new(), groupMask: 0, tailNumber: 0, timeUs: 0);
 
         Assert.Equal(new byte[] { 0 }, frame);
     }
@@ -139,7 +139,7 @@ public class EncoderTests
             Max = 100,
         });
 
-        byte[] frame = _encoder.BuildFrame(icd, new() { ["battery"] = 150 }, groupMask: 0, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, new() { ["battery"] = 150 }, groupMask: 0, tailNumber: 0, timeUs: 0);
 
         Assert.Equal(new byte[] { 100 }, frame);
     }
@@ -156,7 +156,7 @@ public class EncoderTests
             Max = 100,
         });
 
-        byte[] frame = _encoder.BuildFrame(icd, new() { ["battery"] = 0 }, groupMask: 0, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, new() { ["battery"] = 0 }, groupMask: 0, tailNumber: 0, timeUs: 0);
 
         Assert.Equal(new byte[] { 10 }, frame);
     }
@@ -173,7 +173,7 @@ public class EncoderTests
             Max = 7,
         });
 
-        byte[] frame = _encoder.BuildFrame(icd, new() { ["flag"] = 5 }, groupMask: 0, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, new() { ["flag"] = 5 }, groupMask: 0, tailNumber: 0, timeUs: 0);
 
         Assert.Single(frame);
     }
@@ -188,42 +188,51 @@ public class EncoderTests
             .Where(p => p.Identifier != "correlator")
             .ToDictionary(p => p.Identifier, p => (double)p.Min);
 
-        byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask: 0, tailNumber: 0, timeMs: 0);
+        byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask: 0, tailNumber: 0, timeUs: 0);
 
         int expectedBytes = (icd.Params.Sum(p => p.Size) + 7) / 8;
         Assert.Equal(expectedBytes, frame.Length);
     }
 
     [Fact]
-    public void RealCsvAndMapping_ResolvesAndEncodesActualRow()
+    public void SixtyFourBitFloat_IsWrittenAsDouble()
     {
-        string icdJson = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "MissionMapTable.json"));
-        IcdDocument icd = IcdDocument.Load(icdJson);
+        IcdDocument icd = DocumentOf(new IcdParam
+        {
+            Identifier = "SensorLatitude",
+            Type = IcdDataType.FLOAT,
+            Size = 64,
+            Min = -90,
+            Max = 90,
+        });
 
-        string mappingJson = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "DjiMapping.json"));
-        MappingConfig mapping = MappingConfig.Load(mappingJson, icd);
+        byte[] frame = _encoder.BuildFrame(icd, new() { ["SensorLatitude"] = 24.013036123456 }, groupMask: 0, tailNumber: 0, timeUs: 0);
 
-        using FileStream csvStream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "TestData", "DJI_0001-TxtLogToCsv.csv"));
-        List<Dictionary<string, string>> rawRecords = new CsvRecordReader().ReadRecords(csvStream);
+        Assert.Equal(BitConverter.GetBytes(24.013036123456), frame);
+    }
 
-        Dictionary<string, double> resolvedValues = new Resolver().Resolve(rawRecords[0], mapping);
+    [Fact]
+    public void MisbFlightsRow_EncodesToTheIcdLayout()
+    {
+        IcdDocument icd = IcdDocument.Load(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "MissionMapTable.json")));
+        MappingConfig mapping = MappingConfig.Load(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "TestData", "MisbMapping.json")), icd);
 
-        byte[] frame = _encoder.BuildFrame(icd, resolvedValues, groupMask: 0, tailNumber: 42, timeMs: 1790856000000);
+        using FileStream csvStream = File.OpenRead(Path.Combine(AppContext.BaseDirectory, "TestData", "Flights_DJI_0001_telemetry.csv"));
+        List<Dictionary<string, string>> rows = new CsvRecordReader().ReadRecords(csvStream);
+        Dictionary<string, double> resolved = new Resolver().Resolve(rows[0], mapping);
 
-        int expectedBytes = (icd.Params.Sum(p => p.Size) + 7) / 8;
-        Assert.Equal(expectedBytes, frame.Length);
+        const long stampUs = 1_790_856_000_123_456;
+        byte[] frame = _encoder.BuildFrame(icd, resolved, groupMask: 0, tailNumber: 42, timeUs: stampUs);
 
-        // sync words and tail number are always emitted, independent of groupMask/CSV content
-        Assert.Equal(176, frame[0]);
-        Assert.Equal(59, frame[1]);
-        Assert.Equal(79, frame[2]);
-        Assert.Equal(42, BitConverter.ToUInt16(frame, 3));
-
-        // time is the stamp handed in by the caller, not the CSV's own time column
-        Assert.Equal(1790856000000, BitConverter.ToInt64(frame, 6));
-
-        // correlator low nibble reflects groupMask (0 here); latitude comes straight from the CSV row
-        Assert.Equal(0, frame[5] & 0b0000_1111);
-        Assert.Equal(24.013433f, BitConverter.ToSingle(frame, 14));
+        Assert.Equal(70, frame.Length);
+        Assert.Equal(new byte[] { 176, 59, 79 }, frame[..3]);                    // sync words
+        Assert.Equal(42, BitConverter.ToUInt16(frame, 3));                         // tail number
+        Assert.Equal(0, frame[5] & 0b0000_1111);                                   // correlator: no optional groups
+        Assert.Equal(stampUs, BitConverter.ToInt64(frame, 6));                     // PrecisionTimeStamp, the caller's stamp
+        Assert.Equal(180.3f, BitConverter.ToSingle(frame, 14));                    // PlatformHeadingAngle
+        Assert.Equal(24.013036, BitConverter.ToDouble(frame, 26));                 // SensorLatitude, full double precision
+        Assert.Equal(-104.682903, BitConverter.ToDouble(frame, 34));               // SensorLongitude
+        Assert.Equal((float)1935.19675138, BitConverter.ToSingle(frame, 42));      // SensorTrueAltitude
+        Assert.Equal(81.7f, BitConverter.ToSingle(frame, 50));                     // SensorHorizontalFieldOfView
     }
 }

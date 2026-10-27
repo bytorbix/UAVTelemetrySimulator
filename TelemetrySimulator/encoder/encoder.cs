@@ -7,9 +7,9 @@ public class Encoder
     const int BITS_PER_BYTE = 8;
     const string CORRELATOR_PARAM_NAME = "correlator";
     const string TAIL_NUMBER_PARAM_NAME = "Tail number";
-    const string TIME_PARAM_NAME = "time";
+    public const string TIME_PARAM_NAME = "PrecisionTimeStamp"; // MISB ST 0601 tag 2, microseconds since the Unix epoch
 
-    public byte[] BuildFrame(IcdDocument icd, Dictionary<string, double> resolvedValues, int groupMask, int tailNumber, long timeMs)
+    public byte[] BuildFrame(IcdDocument icd, Dictionary<string, double> resolvedValues, int groupMask, int tailNumber, long timeUs)
     {
         byte[] frame = new byte[CalculateFrameSize(icd)];
 
@@ -23,7 +23,7 @@ public class Encoder
 
             if (!IsIncluded(param, groupMask)) continue;
 
-            if (!TryResolveValue(param, resolvedValues, groupMask, tailNumber, timeMs, out double value)) continue;
+            if (!TryResolveValue(param, resolvedValues, groupMask, tailNumber, timeUs, out double value)) continue;
 
             WriteField(frame, param, value, fieldBitOffset);
         }
@@ -38,7 +38,7 @@ public class Encoder
         => param.CorrValue == 0 || (groupMask & param.CorrValue) != 0;
 
     // resolves a param's value, computed/external fields first, then CSV data, then a fixed ICD constant as last resort
-    private static bool TryResolveValue(IcdParam param, Dictionary<string, double> resolvedValues, int groupMask, int tailNumber, long timeMs, out double value)
+    private static bool TryResolveValue(IcdParam param, Dictionary<string, double> resolvedValues, int groupMask, int tailNumber, long timeUs, out double value)
     {
         // include correlator param
         if (param.Identifier == CORRELATOR_PARAM_NAME)
@@ -55,7 +55,7 @@ public class Encoder
         // stamp handed in by the caller
         if (param.Identifier == TIME_PARAM_NAME)
         {
-            value = timeMs;
+            value = timeUs;
             return true;
         }
 
@@ -76,10 +76,13 @@ public class Encoder
 
         if (param.Size % BITS_PER_BYTE == 0)
         {
-            // FLOAT is always 4 raw bytes
-            byte[] bytes = param.Type == IcdDataType.INTEGER
-                ? BitConverter.GetBytes((long)value)[..(param.Size / BITS_PER_BYTE)]
-                : BitConverter.GetBytes((float)value);
+            // FLOAT is 4 raw bytes (float) or 8 (double); INTEGER is little-endian, cut to its size
+            byte[] bytes = param.Type switch
+            {
+                IcdDataType.INTEGER => BitConverter.GetBytes((long)value)[..(param.Size / BITS_PER_BYTE)],
+                IcdDataType.FLOAT when param.Size == 64 => BitConverter.GetBytes(value),
+                _ => BitConverter.GetBytes((float)value),
+            };
 
             int byteOffset = fieldBitOffset / BITS_PER_BYTE;
             Array.Copy(bytes, 0, payload, byteOffset, bytes.Length);
